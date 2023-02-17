@@ -1,17 +1,20 @@
 import NextAuth from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
-import clientPromise from '@/lib/mongodb';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcrypt';
+import prismadb from '@/libs/prismadb';
 
 export default NextAuth({
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID || '',
       clientSecret: process.env.GITHUB_SECRET || '',
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     Credentials({
       id: 'credentials',
@@ -27,15 +30,15 @@ export default NextAuth({
         }
       },
       async authorize(credentials) {
-        await dbConnect();
-
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password required');
         }
 
-        const user = await User.findOne({ email: credentials.email });
+        const user = await prisma.user.findUnique({ where: {
+          email: credentials.email
+        }});
 
-        if (!user) {
+        if (!user || !user.hashedPassword) {
           throw new Error('Email does not exist');
         }
 
@@ -53,7 +56,7 @@ export default NextAuth({
     signIn: '/auth'
   },
   debug: process.env.NODE_ENV === 'development',
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: PrismaAdapter(prismadb),
   session: { strategy: 'jwt' },
   jwt: {
     secret: process.env.NEXTAUTH_JWT_SECRET,

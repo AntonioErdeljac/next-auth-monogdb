@@ -85,7 +85,7 @@ const Auth: NextPage = ({ providers }: any) => {
               onClick={() => {
                 signIn(provider.id, {
                   callbackUrl: '/',
-                });
+                })
               }}
             >
               <Box>Sign in with {provider.name}</Box>
@@ -107,7 +107,7 @@ const Auth: NextPage = ({ providers }: any) => {
     try {
     const res = await axios.post('/api/auth/register', {
       email,
-      username,
+      name: username,
       password
     }, {
       headers: {
