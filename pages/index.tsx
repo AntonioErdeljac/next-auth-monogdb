@@ -1,27 +1,35 @@
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { Flex, Button, Text, Heading } from '@chakra-ui/react';
+import { useMemo } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { Button,  VStack } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
 
-export default function Home() {
+const Home: React.FC = () => {
+  const router = useRouter();
   const { data: session } = useSession();
 
+  const isLoggedIn = useMemo(() => !!session?.user?.email, [session?.user?.email]);
+
   return (
-    <Flex direction="column" alignItems="center" justifyContent="center">
-      <Heading>Home</Heading>
-      {session ? (
+    <VStack>
+      <h1>Home Page - Unprotected</h1>
+
+      {isLoggedIn && (
+          <>
+            <p>Logged in as {session?.user?.email}</p>
+            <Button onClick={() => signOut()}>Logout</Button>
+          </>
+        )
+      }
+
+      {!isLoggedIn && (
         <>
-          <Text>
-            Signed in as {session?.user?.email} <br />
-          </Text>
-          <Button onClick={() => signOut()}>Sign out</Button>
-        </>
-      ) : (
-        <>
-          <Flex direction="column" alignItems="center" justifyContent="center">
-            Not signed in <br />
-            <Button onClick={() => signIn()}>Sign in</Button>
-          </Flex>
+          <p>Not logged in</p>
+          <Button onClick={() => router.push('/auth')}>Login</Button>
         </>
       )}
-    </Flex>
+    </VStack>
   )
 }
+
+
+export default Home;
